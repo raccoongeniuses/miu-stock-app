@@ -1,4 +1,5 @@
 import { Product, Shipment, StockUpdate, ExchangeRate } from '@/types';
+import { calculateRealStock } from './utils';
 
 const STORAGE_KEYS = {
   PRODUCTS: 'miu-products',
