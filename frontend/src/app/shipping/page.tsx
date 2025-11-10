@@ -38,6 +38,8 @@ export default function ShippingPage() {
   const handleEdit = (shipment: Shipment) => {
     setEditingShipment(shipment.id);
     setEditForm({
+      date: shipment.date,
+      estimatedArrival: shipment.estimatedArrival,
       status: shipment.status,
       notes: shipment.notes,
       forwarderName: shipment.forwarderName
@@ -327,7 +329,16 @@ export default function ShippingPage() {
                   return (
                     <tr key={shipment.id} className={isOverdue ? 'bg-red-50' : ''}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(shipment.date)}
+                        {editingShipment === shipment.id ? (
+                          <input
+                            type="date"
+                            value={editForm.date ? editForm.date.toISOString().split('T')[0] : ''}
+                            onChange={(e) => setEditForm({ ...editForm, date: new Date(e.target.value) })}
+                            className="px-2 py-1 border border-gray-300 rounded text-sm"
+                          />
+                        ) : (
+                          formatDate(shipment.date)
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-900">
@@ -339,22 +350,33 @@ export default function ShippingPage() {
                         {shipment.containerNumber || shipment.awbNumber || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {formatDate(shipment.estimatedArrival)}
-                        </div>
-                        <div className={`text-xs ${
-                          isOverdue ? 'text-red-600' :
-                          daysUntil <= 3 ? 'text-yellow-600' : 'text-gray-500'
-                        }`}>
-                          {isOverdue
-                            ? `${Math.abs(daysUntil)} days overdue`
-                            : daysUntil === 0
-                            ? 'Today'
-                            : daysUntil === 1
-                            ? 'Tomorrow'
-                            : `${daysUntil} days`
-                          }
-                        </div>
+                        {editingShipment === shipment.id ? (
+                          <input
+                            type="date"
+                            value={editForm.estimatedArrival ? editForm.estimatedArrival.toISOString().split('T')[0] : ''}
+                            onChange={(e) => setEditForm({ ...editForm, estimatedArrival: new Date(e.target.value) })}
+                            className="px-2 py-1 border border-gray-300 rounded text-sm mb-1"
+                          />
+                        ) : (
+                          <>
+                            <div className="text-sm text-gray-900">
+                              {formatDate(shipment.estimatedArrival)}
+                            </div>
+                            <div className={`text-xs ${
+                              isOverdue ? 'text-red-600' :
+                              daysUntil <= 3 ? 'text-yellow-600' : 'text-gray-500'
+                            }`}>
+                              {isOverdue
+                                ? `${Math.abs(daysUntil)} days overdue`
+                                : daysUntil === 0
+                                ? 'Today'
+                                : daysUntil === 1
+                                ? 'Tomorrow'
+                                : `${daysUntil} days`
+                              }
+                            </div>
+                          </>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-900">

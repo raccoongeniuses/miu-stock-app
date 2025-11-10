@@ -3,15 +3,28 @@
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout';
 import { Product } from '@/types';
-import { getProducts, updateProduct } from '@/lib/storage';
+import { getProducts, updateProduct, addProduct } from '@/lib/storage';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Search, Edit, Package, AlertTriangle } from 'lucide-react';
+import { Search, Edit, Package, AlertTriangle, Plus, X } from 'lucide-react';
 
 export default function StockManagement() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingProduct, setEditingProduct] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Product>>({});
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createForm, setCreateForm] = useState<Partial<Product>>({
+    name: '',
+    sku: '',
+    initialStock: 0,
+    stockOut: 0,
+    pendingStock: 0,
+    notes: '',
+    category: '',
+    costPriceRMB: 0,
+    costPriceIDR: 0,
+    sellingPrice: 0
+  });
 
   useEffect(() => {
     const loadProducts = () => {
@@ -30,10 +43,13 @@ export default function StockManagement() {
   const handleEdit = (product: Product) => {
     setEditingProduct(product.id);
     setEditForm({
+      name: product.name,
+      sku: product.sku,
       initialStock: product.initialStock,
       stockOut: product.stockOut,
       pendingStock: product.pendingStock,
-      notes: product.notes
+      notes: product.notes,
+      category: product.category
     });
   };
 
@@ -49,6 +65,28 @@ export default function StockManagement() {
     setEditForm({});
   };
 
+  const handleCreate = () => {
+    const newProduct = addProduct({
+      ...createForm,
+      lastUpdated: new Date()
+    } as Omit<Product, 'id' | 'realStock' | 'margin' | 'lastUpdated'>);
+
+    setProducts(getProducts());
+    setShowCreateForm(false);
+    setCreateForm({
+      name: '',
+      sku: '',
+      initialStock: 0,
+      stockOut: 0,
+      pendingStock: 0,
+      notes: '',
+      category: '',
+      costPriceRMB: 0,
+      costPriceIDR: 0,
+      sellingPrice: 0
+    });
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6" suppressHydrationWarning={true}>
@@ -59,12 +97,21 @@ export default function StockManagement() {
             <p className="text-gray-600">Manage product inventory and stock levels</p>
           </div>
 
-          {lowStockProducts.length > 0 && (
-            <div className="flex items-center gap-2 bg-red-50 text-red-700 px-4 py-2 rounded-lg">
-              <AlertTriangle className="h-5 w-5" />
-              <span className="font-medium">{lowStockProducts.length} low stock items</span>
-            </div>
-          )}
+          <div className="flex items-center gap-4">
+            {lowStockProducts.length > 0 && (
+              <div className="flex items-center gap-2 bg-red-50 text-red-700 px-4 py-2 rounded-lg">
+                <AlertTriangle className="h-5 w-5" />
+                <span className="font-medium">{lowStockProducts.length} low stock items</span>
+              </div>
+            )}
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Add Product
+            </button>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -78,6 +125,148 @@ export default function StockManagement() {
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
+
+        {/* Create Form Modal */}
+        {showCreateForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Create New Product</h2>
+                <button
+                  onClick={() => setShowCreateForm(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                  <input
+                    type="text"
+                    value={createForm.name || ''}
+                    onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Premium Leather Steering Cover"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
+                  <input
+                    type="text"
+                    value={createForm.sku || ''}
+                    onChange={(e) => setCreateForm({ ...createForm, sku: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., CSK001"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <input
+                    type="text"
+                    value={createForm.category || ''}
+                    onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Interior, Exterior"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cost Price (RMB)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={createForm.costPriceRMB || ''}
+                    onChange={(e) => setCreateForm({ ...createForm, costPriceRMB: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., 8.5"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cost Price (IDR)</label>
+                  <input
+                    type="number"
+                    value={createForm.costPriceIDR || ''}
+                    onChange={(e) => setCreateForm({ ...createForm, costPriceIDR: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., 18500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Selling Price (IDR)</label>
+                  <input
+                    type="number"
+                    value={createForm.sellingPrice || ''}
+                    onChange={(e) => setCreateForm({ ...createForm, sellingPrice: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., 35000"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Initial Stock</label>
+                  <input
+                    type="number"
+                    value={createForm.initialStock || ''}
+                    onChange={(e) => setCreateForm({ ...createForm, initialStock: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock Out</label>
+                  <input
+                    type="number"
+                    value={createForm.stockOut || ''}
+                    onChange={(e) => setCreateForm({ ...createForm, stockOut: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Pending Stock</label>
+                  <input
+                    type="number"
+                    value={createForm.pendingStock || ''}
+                    onChange={(e) => setCreateForm({ ...createForm, pendingStock: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <textarea
+                    value={createForm.notes || ''}
+                    onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={3}
+                    placeholder="Additional notes about this product..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowCreateForm(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreate}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Create Product
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Product Table */}
         <div className="bg-white shadow rounded-lg overflow-hidden">
@@ -118,13 +307,43 @@ export default function StockManagement() {
                       <div className="flex items-center">
                         <Package className="h-5 w-5 text-gray-400 mr-3" />
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                          <div className="text-sm text-gray-500">{product.category}</div>
+                          {editingProduct === product.id ? (
+                            <div>
+                              <input
+                                type="text"
+                                value={editForm.name || ''}
+                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                className="block w-full px-2 py-1 border border-gray-300 rounded mb-1 text-sm font-medium text-gray-900"
+                                placeholder="Product name"
+                              />
+                              <input
+                                type="text"
+                                value={editForm.category || ''}
+                                onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                                className="block w-full px-2 py-1 border border-gray-300 rounded text-sm text-gray-500"
+                                placeholder="Category"
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                              <div className="text-sm text-gray-500">{product.category}</div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
-                      {product.sku}
+                      {editingProduct === product.id ? (
+                        <input
+                          type="text"
+                          value={editForm.sku || ''}
+                          onChange={(e) => setEditForm({ ...editForm, sku: e.target.value })}
+                          className="w-24 px-2 py-1 border border-gray-300 rounded font-mono text-sm"
+                        />
+                      ) : (
+                        product.sku
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {editingProduct === product.id ? (

@@ -26,6 +26,8 @@ export default function PricingPage() {
   const handleEdit = (product: Product) => {
     setEditingProduct(product.id);
     setEditForm({
+      name: product.name,
+      category: product.category,
       costPriceRMB: product.costPriceRMB,
       sellingPrice: product.sellingPrice
     });
@@ -197,8 +199,29 @@ export default function PricingPage() {
                 {products.map((product) => (
                   <tr key={product.id} className={product.margin < 30 ? 'bg-red-50' : ''}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                      <div className="text-sm text-gray-500">{product.category}</div>
+                      {editingProduct === product.id ? (
+                        <div>
+                          <input
+                            type="text"
+                            value={editForm.name || ''}
+                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                            className="block w-full px-2 py-1 border border-gray-300 rounded mb-1 text-sm font-medium text-gray-900"
+                            placeholder="Product name"
+                          />
+                          <input
+                            type="text"
+                            value={editForm.category || ''}
+                            onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                            className="block w-full px-2 py-1 border border-gray-300 rounded text-sm text-gray-500"
+                            placeholder="Category"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                          <div className="text-sm text-gray-500">{product.category}</div>
+                        </>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
                       {product.sku}
